@@ -1,4 +1,4 @@
-#include <renard.h>
+#include <ArduinoRenard.h>
 
 void RenardReceiver::begin(renard_addr_t channels, HardwareSerial *hwSerial, uint32_t baud)
 {
