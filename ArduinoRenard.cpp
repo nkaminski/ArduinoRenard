@@ -52,7 +52,6 @@ bool RenardReceiver::process()
             break;
 
         case COMMAND:
-            idle = false;
             lastCmdReceived = millis();
             if (incomingByte >= RENARD_MIN_CHANNEL_COMMAND)
             {
@@ -190,8 +189,10 @@ renard_state_t RenardReceiver::processIncomingByte(byte value)
     if (recvAddress >= channelOffset)
     {
         bufferAddress = recvAddress - channelOffset;
-        if (bufferAddress < channelCount)
+        if (bufferAddress < channelCount){
+            idle = false;    // Not idle == bytes addressed to *us*
             channelData[bufferAddress] = value;
+        }
         else
             return COMPLETE;
     }
