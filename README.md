@@ -49,6 +49,7 @@ all incoming data in the serial receive queue is processed prior to the read occ
 ```
 
 Processes all pending data in the serial receive buffer. Must be called frequently in order to avoid data loss.
+Returns true if any bytes were processed.
 ```c
     bool process();
 ```

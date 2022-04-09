@@ -16,7 +16,7 @@ void RenardReceiver::begin(renard_addr_t channels, HardwareSerial *hwSerial, uin
     // Init receiver FSM
     state = INIT;
     specialPending = false;
-    idleTimeout = DEFAULT_IDLE_TIMEOUT;
+    idleTimeout = RENARD_DEFAULT_IDLE_TIMEOUT;
     lastCmdReceived = 0;
 
     // Initialize serial port
@@ -53,10 +53,24 @@ bool RenardReceiver::process()
 
         case COMMAND:
             lastCmdReceived = millis();
-            if (incomingByte >= RENARD_MIN_CHANNEL_COMMAND)
+            if (incomingByte == RENARD_MIN_CHANNEL_COMMAND)
             {
-                recvAddress = (incomingByte - RENARD_MIN_CHANNEL_COMMAND) * 8;
+                // Common case optimization
+                recvAddress = 0;
                 state = DATA;
+            }
+            else if (incomingByte > RENARD_MIN_CHANNEL_COMMAND)
+            {
+                recvAddress = incomingByte - RENARD_MIN_CHANNEL_COMMAND;
+                if (recvAddress > (RENARD_MAX_ADDRESS >> 3)) {
+                    // Bad address offset, will overflow!
+                    state = INIT;
+                }
+                else {
+                    // Start receiving at 8 times the "unit" offset
+                    recvAddress *= 8;
+                    state = DATA;
+                }
             }
             else if (incomingByte == RENARD_SPECIAL_COMMAND)
             {
@@ -198,7 +212,7 @@ renard_state_t RenardReceiver::processIncomingByte(byte value)
     }
 
     // Cannot track more data therefore stop receiving
-    if (recvAddress >= RENARD_MAX_ADDRESS)
+    if (recvAddress == RENARD_MAX_ADDRESS)
         return COMPLETE;
 
     // Increment receive address and keep reading
